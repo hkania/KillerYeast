@@ -48,16 +48,24 @@ deletion3a <- deletions3 %>%
 
 del2norm <- ggplot() +
   geom_point(data = deletion2a, aes(x=Day, y=Norm_Hgui_Change, color=Culture, group=Well_Num)) +
-  labs(x = "Days Since Grape Juice Inoculation", y = "Percent Change in Culture (H. gui)") + ggtitle("DeletionsRep1") +
+  labs(x = "Days Since Grape Juice Inoculation", y = "Percent Change in Culture (H. gui)") + ggtitle("DeletionsRep2") +
   geom_line(data = deletion2a, aes(x=Day, y=Norm_Hgui_Change, color=Culture, group=Well_Num)) + ylim(0,1.3)
 del2norm
 
 del3norm <- ggplot() +
   geom_point(data = deletion3a, aes(x=Day, y=Norm_Hgui_Change, color=Culture, group=Well_Num)) +
-  labs(x = "Days Since Grape Juice Inoculation", y = "Percent Change in Culture (H. gui)") + ggtitle("DeletionsRep1") +
+  labs(x = "Days Since Grape Juice Inoculation", y = "Percent Change in Culture (H. gui)") + ggtitle("DeletionsRep3") +
   geom_line(data = deletion3a, aes(x=Day, y=Norm_Hgui_Change, color=Culture, group=Well_Num)) + ylim(0,2.3)
 del3norm
 
 ## moving forward: -->  need to complete the mean from all 6 data points across each day, need to plot these means, need to try faceting by day
 ## need to watch some linear modeling videos (idea is calculate means with genotype as the main factor and replicate as a cofactor or random effect)
 ## ? for Mo is when calculating means, am I using the normalized values based off of the day 5 measurements of each individual well or start from beginning?
+
+## show amount of how much scer is gaining versus hgui
+
+## group by genotype & day across 6 replicates, do mean or sd function &
+## standard error would be sd divided by 6
+## ? for Mo -- when looking at change between day, should I be looking at
+## percent change (that is basically what this is looking at) or should I be looking at
+## numerical change (function currently divides by Day 5's percentage -- should it be a subtraction?)
