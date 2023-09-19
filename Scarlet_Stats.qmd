@@ -1,0 +1,47 @@
+---
+title: "Scarlet_Line_Data"
+format: html
+editor: visual
+---
+
+This quarto document outlines the script used to make the Scarlet data have the same columns as the main WGJ_DF. The WGJ_DF has the wrong values for all scarlet data, so this new dataframe should be used to analyse the scarlet data.
+
+```{r}
+#Import scarlet datafile
+library(readxl)
+Scarlet_Stats <- read_excel("~/Desktop/Scarlet_Stats.xlsx")
+View(Scarlet_Stats)
+```
+
+```{r}
+#mutate the dataframe to match the WGJ dataframe
+library(tidyverse)
+
+Scarlet_DF <- Scarlet_Stats |> 
+  rename(Scer_Stained = Scer_Dead) |> 
+  rename(Scer_Dead_Num = PI_Stain) |> 
+  rename(Hgui_Dead_Num = Hgui_Dead) |> 
+  rename(Hgui_Alive_Num = Hgui_Alive) |> 
+  rename(Q1_Scer = Scer_Alive) |> 
+  mutate(Scer_Alive_Num = Scer_Stained - Scer_Dead_Num) |> 
+  mutate(Total_Cells = (Hgui_Dead_Num + Hgui_Alive_Num + Q1_Scer + Scer_Stained))
+  
+```
+
+```{r}
+#trial for adding new columns
+
+Scarlet_Df_match <- Scarlet_DF |> 
+  mutate(Hgui_Alive_Total_Alive = Hgui_Alive_Num / (Hgui_Alive_Num + Scer_Alive_Num)) |> 
+  mutate(Per_Hgui_Alive_Total_Alive = Hgui_Alive_Total_Alive * 100) |> 
+  mutate(Scer_Alive_Total_Alive = Scer_Alive_Num / (Hgui_Alive_Num + Scer_Alive_Num)) |> 
+  mutate(Per_Scer_Alive_Total_Alive = Scer_Alive_Total_Alive * 100) |> 
+  mutate(Hgui_Dead_Total_Hgui = Hgui_Dead_Num / (Hgui_Dead_Num + Hgui_Alive_Num)) |> 
+  mutate(Per_Hgui_Dead_Total_Hgui = Hgui_Dead_Total_Hgui * 100) |> 
+  mutate(Scer_Dead_Total_Scer = Scer_Dead_Num / (Scer_Stained + Q1_Scer)) |> 
+  mutate(Per_Scer_Dead_Total_Scer = Scer_Dead_Total_Scer * 100) |> 
+  mutate(Scer_Alive_Total_Scer = Scer_Alive_Num / (Scer_Stained + Q1_Scer)) |> 
+  mutate(Per_Scer_Alive_Total_Scer = Scer_Alive_Total_Scer * 100) |> 
+  mutate(Hgui_Alive_Total_Hgui = Hgui_Alive_Num / (Hgui_Dead_Num + Hgui_Alive_Num)) |> 
+  mutate(Per_Hgui_Alive_Total_Hgui = Hgui_Alive_Total_Hgui * 100)
+```
