@@ -15,6 +15,7 @@ View(Scarlet_Stats)
 
 ```{r}
 #mutate the dataframe to match the WGJ dataframe
+#update on 9/21/2023 to reformat the days, wrongfully recorded days 1-5 when should have been 5-9
 library(tidyverse)
 
 Scarlet_DF <- Scarlet_Stats |> 
@@ -25,6 +26,11 @@ Scarlet_DF <- Scarlet_Stats |>
   rename(Q1_Scer = Scer_Alive) |> 
   mutate(Scer_Alive_Num = Scer_Stained - Scer_Dead_Num) |> 
   mutate(Total_Cells = (Hgui_Dead_Num + Hgui_Alive_Num + Q1_Scer + Scer_Stained))
+Scarlet_DF$Day[Scarlet_DF$Day == 5] <- 9
+Scarlet_DF$Day[Scarlet_DF$Day == 4] <- 8
+Scarlet_DF$Day[Scarlet_DF$Day == 3] <- 7
+Scarlet_DF$Day[Scarlet_DF$Day == 2] <- 6
+Scarlet_DF$Day[Scarlet_DF$Day == 1] <- 5
   
 ```
 
@@ -44,4 +50,58 @@ Scarlet_Df_match <- Scarlet_DF |>
   mutate(Per_Scer_Alive_Total_Scer = Scer_Alive_Total_Scer * 100) |> 
   mutate(Hgui_Alive_Total_Hgui = Hgui_Alive_Num / (Hgui_Dead_Num + Hgui_Alive_Num)) |> 
   mutate(Per_Hgui_Alive_Total_Hgui = Hgui_Alive_Total_Hgui * 100)
+```
+
+```{r}
+write_csv(Scarlet_Df_match, "Scarlet_Df_match.csv")
+?write_csv
+```
+
+```{r}
+killeryeast_data <- read_csv('./WGJ_DFx_MS.csv') 
+str(killeryeast_data)
+Scarlet_data <- read_csv("Scarlet_Df_match.csv")
+killeryeast_norm <- killeryeast_data[, 1:9] %>%
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num)/Total_Cells)%>%  
+  group_by(Day, Replicate) %>%
+  filter(Culture != "b") %>%
+  mutate(norm_Hgui_totalprop = (Hgui_totalprop - min(Hgui_totalprop[Culture == "3324a"]))/(max(Hgui_totalprop[Culture == "3850"])- min(Hgui_totalprop[Culture == "3324a"])))
+```
+
+```{r}
+#Hannah normalizes scarlet dataset using this framework
+#need to add wildtype scer alone and hgui alone values to scarlet dataset (1) pull out wt wells from main dataset (2) remove row in scarlet dataset that the other does not have (3) add
+#(1)
+wildtype_wells <- killeryeast_data[, 1:9] |> 
+  filter(Culture %in% c("3324a", "3850"))
+#(2)
+Scarlet_wells <- Scarlet_data[, 1:11] |> 
+  select(!c("Q1_Scer", "Scer_Stained"))
+
+
+Scarlet_wells |> 
+  group_by(Day) |> 
+  summarize(nobs = n())
+#(3)
+merged_scarlet_dataset <- 
+  rbind(Scarlet_wells, wildtype_wells)
+```
+
+```{r}
+merged_scarlet_dataset |>
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num) / Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num) / Total_Cells) |>
+  group_by(Day, Replicate) |> 
+  summarise(nobs = n())
+
+
+#try to make normalized datafram
+scarlet_norm <- 
+  merged_scarlet_dataset |>
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num)/Total_Cells) |> 
+  group_by(Day, Replicate) |> 
+  mutate(norm_Hgui_totalprop = (Hgui_totalprop - min(Hgui_totalprop[Culture == "3324a"]))/(max(Hgui_totalprop[Culture == "3850"]) - min(Hgui_totalprop[Culture == "3324a"])))
+
 ```
