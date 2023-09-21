@@ -1,0 +1,23 @@
+---
+title: "VariationChecks_Plots_Scarlet"
+format: html
+editor: visual
+---
+
+## Scarlet Line Plots after Normalization Dataframe was Made
+
+See Scarlet_Stats.qmd for code to generate scarlet normalization dataframe from Scarlet_Df_match.csv
+
+```{r}
+scarlet_norm <- read.csv("./Scarlet_norm.csv")
+
+scar_lines <- c('3852', '3920' ,'3984')
+
+norm_scarlet_strains_hk <- ggplot(subset(scarlet_norm, Culture %in% scar_lines), 
+       aes(x = Day, y =norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(width = 0.2) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) + 
+  facet_wrap(~Replicate) + theme_bw()
+
+?ggsave
+ggsave("norm_scarlet_strains_hk.png")
+```
