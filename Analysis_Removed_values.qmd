@@ -1,0 +1,30 @@
+---
+title: "Analysis_RemovedValues"
+format: html
+editor: visual
+---
+
+```{r}
+#Merge the datasets into one large dataset (cannot remember if I did this...)
+
+scar_lines <- c('3852', '3920' ,'3984')
+
+killer_yeast_norm_noscar <- killeryeast_norm |> 
+  filter(Culture != "3920") |> 
+  filter(Culture != "3852") |> 
+  filter(Culture != "3984")
+
+killer_yeast_norm_noscar |> 
+  filter(Culture == "3852")
+
+merged_killeryeast_dataset_norm <- 
+  rbind(scarlet_norm, killer_yeast_norm_noscar)
+
+which(merged_killeryeast_dataset_norm$Well_Num == "C3" & merged_killeryeast_dataset_norm$Day == 7 & merged_killeryeast_dataset_norm$Replicate == 2)
+
+merged_data_final <- merged_killeryeast_dataset_norm[-c(285, 282, 290, 352, 261, 241, 48, 76, 286), ]
+  
+which(merged_data_final$Well_Num == "C3" & merged_data_final$Day == 7 & merged_data_final$Replicate == 2)
+
+write_csv(merged_data_final, "merged_data_rm_HK.csv")
+```
