@@ -1,0 +1,222 @@
+---
+title: "Non_Scarlet_Norm_Plots"
+format: html
+editor: visual
+---
+
+```{r}
+killeryeast_data <- read_csv('./WGJ_DFx_MS.csv') 
+str(killeryeast_data)
+Scarlet_data <- read_csv("Scarlet_Df_match.csv")
+##Replicate 2, day 8, 3324A, well D2 observation was not recorded; removed this one row from Hannah's manually
+
+## Carryover/debris events artificially inflate the number of H. guillermondii cells in samples.
+## This is an attempt to normalize that inflation away by using the number of events detected in S.cer alone (minimum)
+## and in H. gui alone (maximum)
+# Normalization function
+
+## Make initial subset of the data with 3324a (cerevisiae alone), 3324m (cer + hgui mixed), 3850 (gui alone), and b (blank) 
+
+miniset <-  subset(killeryeast_data, Culture %in% c("b", "3850", "3324a", "3324m"))[, 1:9]
+
+## Data without normalization; note that the Scer alone consistently shows some guillermondii cells. However, this ratio does not change at all throughout the experiment,
+## consistent with this being carryover and/or misidentification of debris. 
+miniset <- miniset %>% 
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells,
+      Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num)/Total_Cells)
+
+ggplot(miniset, aes(x = Day, y = Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_point() + geom_label(hjust = 0, nudge_x = 0.15) + 
+  facet_wrap(~Replicate)
+
+## Normalize this away--the maximum of our detection limit of guillermondii should be guillermondii alone; the minimum should be S. cerevisiae. Also removing blanks from this;
+## the behavior of the blanks is largely noise and not comparable -- the one contaminated blank was removed and all other blanks were checked everyday for contamination. 
+miniset_norm <- miniset %>%  
+  group_by(Day, Replicate) %>%
+  filter(Culture != "b") %>%
+  mutate(norm_Hgui_totalprop = (Hgui_totalprop - min(Hgui_totalprop[Culture == "3324a"]))/(max(Hgui_totalprop[Culture == "3850"])- min(Hgui_totalprop[Culture == "3324a"])))
+
+ggplot(miniset_norm, aes(x = Day, y =norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(width = 0.2) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) + 
+  facet_wrap(~Replicate) + theme_bw()
+
+## Use this framework to normalize whole dataset
+killeryeast_norm <- killeryeast_data[, 1:9] %>%
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num)/Total_Cells)%>%  
+  group_by(Day, Replicate) %>%
+  filter(Culture != "b") %>%
+  mutate(norm_Hgui_totalprop = (Hgui_totalprop - min(Hgui_totalprop[Culture == "3324a"]))/(max(Hgui_totalprop[Culture == "3850"])- min(Hgui_totalprop[Culture == "3324a"])))
+  
+#Hannah normalizes scarlet dataset using this framework
+#need to add wildtype scer alone and hgui alone values to scarlet dataset (1) pull out wt wells from main dataset (2) remove row in scarlet dataset that the other does not have (3) add
+#(1)
+wildtype_wells <- killeryeast_data[, 1:9] |> 
+  filter(Culture %in% c("3324a", "3850"))
+#(2)
+Scarlet_wells <- Scarlet_data[, 1:11] |> 
+  select(!c("Q1_Scer", "Scer_Stained"))
+#(3)
+merged_scarlet_dataset <- 
+  rbind(Scarlet_wells, wildtype_wells)
+
+#NORMALIZE (why is this acting up for the scarlet dataset? giving Inf & -Inf)
+scarlet_norm <- 
+  merged_scarlet_dataset |>
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num)/Total_Cells) |> 
+  group_by(Day, Replicate) |> 
+  mutate(norm_Hgui_totalprop = (Hgui_totalprop - min(Hgui_totalprop[Culture == "3324a"]))/(max(Hgui_totalprop[Culture == "3850"]) - min(Hgui_totalprop[Culture == "3324a"])))
+```
+
+```{r}
+## The whole dataset is a lot, so first check genotypes in batches. 
+single_del <- c("3821", "3822", "3824")
+rec_gen <- c('3911', '3905', '3842', '3973')
+
+ggplot(subset(killeryeast_norm, Culture %in% single_del), 
+       aes(x = Day, y =norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(width = 0.2) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) + 
+  facet_wrap(~Replicate) + theme_bw()
+
+ggplot(subset(killeryeast_norm, Culture %in% rec_gen), 
+       aes(x = Day, y =norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(width = 0.2) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) + 
+  facet_wrap(~Replicate) + theme_bw()
+```
+
+```{r}
+#Hannah new plots for data on October 4th
+library(patchwork)
+
+killeryeast_norm$Culture <- factor(killeryeast_norm$Culture, 
+                          levels =
+                            c("3920", "3852", "3984", "3324a",
+                              "3850", "3821", "3822", "3824",
+                              '3911', '3905', '3842', '3973',
+                              "b"))
+killeryeast_norm$Replicate <- factor(killeryeast_norm$Replicate, 
+                          levels =
+                            c("1", "2", "3"),
+                          ordered = TRUE)
+```
+
+```{r}
+#single deletions
+box_plot_trial_nonscar <- ggplot(subset(killeryeast_norm, Culture %in% single_del), 
+       aes(x = Culture, y = norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25)
+
+ggsave("box_plot_trial_nonscar.png")
+
+non_scar_boxPlot_Day_5 <- killeryeast_norm |> 
+  subset(Culture %in% single_del)|> 
+  filter(Day == 5) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 5") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_blank())
+
+non_scar_boxPlot_Day_6 <- killeryeast_norm |> 
+  subset(Culture %in% single_del)|> 
+  filter(Day == 6) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 6") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+non_scar_boxPlot_Day_7 <- killeryeast_norm |> 
+  subset(Culture %in% single_del)|> 
+  filter(Day == 7) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 7") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+non_scar_boxPlot_Day_8 <- killeryeast_norm |> 
+  subset(Culture %in% single_del)|> 
+  filter(Day == 8) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 8") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+non_scar_boxPlot_Day_9 <- killeryeast_norm |> 
+  subset(Culture %in% single_del)|> 
+  filter(Day == 9) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 9") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+box_Plots_singledel_norm <- (non_scar_boxPlot_Day_5 + non_scar_boxPlot_Day_6 + non_scar_boxPlot_Day_7 + non_scar_boxPlot_Day_8 + non_scar_boxPlot_Day_9 + plot_layout(ncol = 3) + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Normalized box plots single deletions'))
+
+ggsave("box_Plots_singledel_norm.png")
+```
+
+```{r}
+#reconmbinant genotypes
+rec_gen_boxplot_tot <- ggplot(subset(killeryeast_norm, Culture %in% rec_gen), 
+       aes(x = Culture, y = norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25)
+
+ggsave("rec_gen_boxplot_tot.png")
+
+rec_scar_boxPlot_Day_5 <- killeryeast_norm |> 
+  subset(Culture %in% rec_gen)|> 
+  filter(Day == 5) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 5") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_blank())
+
+rec_scar_boxPlot_Day_6 <- killeryeast_norm |> 
+  subset(Culture %in% rec_gen)|> 
+  filter(Day == 6) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 6") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+rec_scar_boxPlot_Day_7 <- killeryeast_norm |> 
+  subset(Culture %in% rec_gen)|> 
+  filter(Day == 7) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 7") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+rec_scar_boxPlot_Day_8 <- killeryeast_norm |> 
+  subset(Culture %in% rec_gen)|> 
+  filter(Day == 8) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 8") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+rec_scar_boxPlot_Day_9 <- killeryeast_norm |> 
+  subset(Culture %in% rec_gen)|> 
+  filter(Day == 9) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  labs(title = "Day 9") +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+box_Plots_rec_gen_norm <- (rec_scar_boxPlot_Day_5 + rec_scar_boxPlot_Day_6 + rec_scar_boxPlot_Day_7 + rec_scar_boxPlot_Day_8 + rec_scar_boxPlot_Day_9 + plot_layout(ncol = 3) + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Normalized box plots rec gen'))
+
+ggsave("box_Plots_rec_gen_norm.png")
+```
