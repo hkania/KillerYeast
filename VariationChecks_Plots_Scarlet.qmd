@@ -9,6 +9,7 @@ editor: visual
 See Scarlet_Stats.qmd for code to generate scarlet normalization dataframe from Scarlet_Df_match.csv
 
 ```{r}
+library(tidyverse)
 scarlet_norm <- read.csv("./Scarlet_norm.csv")
 
 scar_lines <- c('3852', '3920' ,'3984')
@@ -18,6 +19,102 @@ norm_scarlet_strains_hk <- ggplot(subset(scarlet_norm, Culture %in% scar_lines),
   geom_jitter(width = 0.2) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) + 
   facet_wrap(~Replicate) + theme_bw()
 
+norm_scarlet_strains_hk
+
 ?ggsave
 ggsave("norm_scarlet_strains_hk.png")
+
+#hannah plot 1 Oct 4
+ggplot(subset(scarlet_norm, Culture %in% 
+                  scar_lines), 
+       aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_boxplot(width = 0.2)  + 
+  facet_wrap(~Replicate) + theme_bw()
+
+#hannah plot 2 Oct 4
+ggplot(subset(scarlet_norm, Culture %in% 
+                  scar_lines), 
+       aes(x = Replicate, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_boxplot(width = 0.2)  + 
+  facet_wrap(~Day) + theme_bw()
+
+#add labels to see which are outliers
+box_trial_plot <- ggplot(subset(scarlet_norm, Culture %in% 
+                  scar_lines), 
+       aes(x = Day, y = norm_Hgui_totalprop, fill = Culture, label = Well_Num)) +
+  geom_boxplot(width = 0.2, aes(fill = Culture))  + 
+  geom_text(check_overlap = TRUE) +
+  facet_grid(cols = vars(Replicate)) + theme_bw()
+box_trial_plot
+
+
+
+scarlet_norm$Culture <- 
+  factor(scarlet_norm$Culture, levels = c("3920", "3852", "3324a", "3984","3850"))
+
+scarlet_norm$Replicate <- 
+  factor(scarlet_norm$Replicate, levels = c("1", "2", "3"), ordered = TRUE)
+                          
+box_trial_plot <- ggplot(subset(scarlet_norm, Culture %in% scar_lines), 
+       aes(x = Replicate, y =norm_Hgui_totalprop, fill = Culture, color = Culture, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw()
+box_trial_plot +
+  ylim(-0.5, 1.25)
+
+box_trial_plot2 <- ggplot(subset(scarlet_norm, Culture %in% scar_lines), 
+       aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw()
+box_trial_plot2 +
+  ylim(-0.25, 1.25)
+
+?ylim
+```
+
+```{r}
+library(patchwork)
+
+boxPlot_Day_5 <- scarlet_norm |> 
+  subset(Culture %in% scar_lines)|> 
+  filter(Day == 5) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_blank())
+
+boxPlot_Day_6 <- scarlet_norm |> 
+  subset(Culture %in% scar_lines)|> 
+  filter(Day == 6) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+boxPlot_Day_7 <- scarlet_norm |> 
+  subset(Culture %in% scar_lines)|> 
+  filter(Day == 7) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+boxPlot_Day_8 <- scarlet_norm |> 
+  subset(Culture %in% scar_lines)|> 
+  filter(Day == 8) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+boxPlot_Day_9 <- scarlet_norm |> 
+  subset(Culture %in% scar_lines)|> 
+  filter(Day == 9) |> 
+  ggplot(aes(x = Culture, y =norm_Hgui_totalprop, fill = Replicate, color = Replicate, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + theme_bw() +
+  ylim(-0.25, 1.25) +
+  guides(fill = "none", color = "none") + theme(axis.title.y = element_blank(), axis.title.x = element_blank())
+
+
+(boxPlot_Day_5 + boxPlot_Day_6 + boxPlot_Day_7 + boxPlot_Day_8 + boxPlot_Day_9 + plot_layout(ncol = 2) + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Normalized box plots'))
 ```
