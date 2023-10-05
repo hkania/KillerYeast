@@ -7,6 +7,8 @@ editor: visual
 ```{r}
 #Merge the datasets into one large dataset (cannot remember if I did this...)
 #this code was for first pass at removing values using the separated box plots
+library(tidyverse)
+library(patchwork)
 
 scar_lines <- c('3852', '3920' ,'3984')
 
@@ -52,4 +54,81 @@ Removal_Table <- read_csv("Removals.csv")
 #remove associated rows and save as new dataframe for analysis
 merged_data_final_outliers <- merged_killeryeast_dataset_norm[-c(166, 413, 181, 225, 267, 352, 367, 388, 414, 29, 37, 39, 23, 33, 48, 76), ]
 write_csv(merged_data_final_outliers, "merged_data_rm_HK_v2.csv")
+```
+
+Time to get into the analysis!!
+
+```{r}
+#compare to or add in code for original graphs from Mo --> did removing points alter the result?
+
+#same code as Mo before
+df_subset <- subset(merged_data_final_outliers, Culture %in% c("3824", "3821","3822", "3324", "3852", "3973", "3911", "3872", "3324m"))
+df_subset_hand <- subset(merged_data_final, Culture %in% c("3824", "3821","3822", "3324", "3852", "3973", "3911", "3872", "3324m"))
+
+jitter_plot_outlier <- ggplot(df_subset, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Outlier Removal")
+
+jitter_plot_hand <- ggplot(df_subset_hand, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+
+jitter_plots_HK_Oct5 <- (jitter_plot_outlier + jitter_plot_hand + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Jitter Plots for Cleaned Data'))
+
+ggsave("jitter_plots_HK_Oct5.png")
+
+#groupings for more figures
+single_del <- c("3821", "3822", "3824")
+rec_gen <- c('3911', '3905', '3842', '3973')
+scar_lines <- c('3852', '3920' ,'3984')
+
+#single deletions only
+df_single_del_hand <- subset(merged_data_final, Culture %in% c(single_del, "3324m"))
+df_single_del_outlier <- subset(merged_data_final_outliers, Culture %in% c(single_del, "3324m"))
+
+jitter_plot_singles_outlier <- ggplot(df_single_del_outlier, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Outlier Removal")
+
+jitter_plot_singles_hand <- ggplot(df_single_del_hand, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+
+jitter_plots_singles_HK_Oct5 <- (jitter_plot_singles_outlier + jitter_plot_singles_hand + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Jitter Plots for Cleaned Data Singles'))
+
+ggsave("jitter_plots_singles_HK_Oct5.png")
+
+#scarlet lines only
+df_scar_hand <- subset(merged_data_final, Culture %in% c(scar_lines, "3324m"))
+df_scar_outlier <- subset(merged_data_final_outliers, Culture %in% c(scar_lines, "3324m"))
+
+jitter_plot_scar_outlier <- ggplot(df_scar_outlier, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Outlier Removal")
+
+jitter_plot_scar_hand <- ggplot(df_scar_hand, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+
+jitter_plots_scarlet_HK_Oct5 <- (jitter_plot_scar_outlier + jitter_plot_scar_hand + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Jitter Plots for Cleaned Data Scarlet'))
+
+ggsave("jitter_plots_scarlet_HK_Oct5.png")
+
+#rec genos only
+df_rec_hand <- subset(merged_data_final, Culture %in% c(rec_gen, "3324m"))
+df_rec_outlier <- subset(merged_data_final_outliers, Culture %in% c(rec_gen, "3324m"))
+
+jitter_plot_rec_outlier <- ggplot(df_rec_outlier, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Outlier Removal")
+
+jitter_plot_rec_hand <- ggplot(df_rec_hand, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+
+jitter_plots_rec_HK_Oct5 <- (jitter_plot_rec_outlier + jitter_plot_rec_hand + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Jitter Plots for Cleaned Data Rec Geno'))
+
+ggsave("jitter_plots_rec_HK_Oct5.png")
+
+#3850 & 3324a only
 ```
