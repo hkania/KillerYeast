@@ -6,6 +6,7 @@ editor: visual
 
 ```{r}
 #Merge the datasets into one large dataset (cannot remember if I did this...)
+#this code was for first pass at removing values using the separated box plots
 
 scar_lines <- c('3852', '3920' ,'3984')
 
@@ -27,4 +28,28 @@ merged_data_final <- merged_killeryeast_dataset_norm[-c(285, 282, 290, 352, 261,
 which(merged_data_final$Well_Num == "C3" & merged_data_final$Day == 7 & merged_data_final$Replicate == 2)
 
 write_csv(merged_data_final, "merged_data_rm_HK.csv")
+```
+
+```{r}
+#Merge the datasets into one large dataset
+#this code was for removing values using the normalized box plots not separated based on replicate number
+killer_yeast_norm_noscar <- killeryeast_norm |> 
+  filter(Culture != "3920") |> 
+  filter(Culture != "3852") |> 
+  filter(Culture != "3984")
+
+killer_yeast_norm_noscar |> 
+  filter(Culture == "3852") #should return nothing
+
+#merge datasets
+merged_killeryeast_dataset_norm <- 
+  rbind(scarlet_norm, killer_yeast_norm_noscar)
+
+#find rows to removed based on vaues found to not fit (rows listed in dataframe Full_Box_Plot_Outliers) ###NEED TO MAKE THESE TABLES IN EXCEL AND UPLOAD
+which(merged_killeryeast_dataset_norm$Well_Num == "H2" & merged_killeryeast_dataset_norm$Day == 9 & merged_killeryeast_dataset_norm$Culture == "3984")
+Removal_Table <- read_csv("Removals.csv")
+
+#remove associated rows and save as new dataframe for analysis
+merged_data_final_outliers <- merged_killeryeast_dataset_norm[-c(166, 413, 181, 225, 267, 352, 367, 388, 414, 29, 37, 39, 23, 33, 48, 76), ]
+write_csv(merged_data_final_outliers, "merged_data_rm_HK_v2.csv")
 ```
