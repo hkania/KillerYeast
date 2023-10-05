@@ -49,6 +49,16 @@ ggsave("box_trial_plot2.png")
 ```
 
 ```{r}
+#scarlet in one graph not splitting on replicate to see if there are outliers
+Outlier_BoxPlot_Scar <- ggplot(subset(scarlet_norm, Culture %in% scar_lines), 
+       aes(x = Culture, y =norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() +
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Scarlet Lines")
+ggsave("Outlier_BoxPlot_Scar.png")
+```
+
+```{r}
 library(patchwork)
 
 boxPlot_Day_5 <- scarlet_norm |> 
