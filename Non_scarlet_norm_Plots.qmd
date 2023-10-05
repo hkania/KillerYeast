@@ -5,6 +5,7 @@ editor: visual
 ---
 
 ```{r}
+library(tidyverse)
 killeryeast_data <- read_csv('./WGJ_DFx_MS.csv') 
 str(killeryeast_data)
 Scarlet_data <- read_csv("Scarlet_Df_match.csv")
@@ -94,11 +95,29 @@ killeryeast_norm$Culture <- factor(killeryeast_norm$Culture,
                             c("3920", "3852", "3984", "3324a",
                               "3850", "3821", "3822", "3824",
                               '3911', '3905', '3842', '3973',
-                              "b"))
+                              "b", "3324m"))
 killeryeast_norm$Replicate <- factor(killeryeast_norm$Replicate, 
                           levels =
                             c("1", "2", "3"),
                           ordered = TRUE)
+```
+
+```{r}
+#single deletion and rec genos in one graph not splitting on culture to see if there are outliers
+Outlier_BoxPlot_Single_Del <- ggplot(subset(killeryeast_norm, Culture %in% single_del), 
+       aes(x = Culture, y = norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Single Deletions")
+
+Outlier_BoxPlot_Rec_Gen <- ggplot(subset(killeryeast_norm, Culture %in% rec_gen), 
+       aes(x = Culture, y = norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Rec Gen")
+  
+ggsave("Outlier_BoxPlot_Rec_Gen.png")
+ggsave("Outlier_BoxPlot_Single_Del.png")
 ```
 
 ```{r}
