@@ -56,6 +56,15 @@ merged_data_final_outliers <- merged_killeryeast_dataset_norm[-c(166, 413, 181, 
 write_csv(merged_data_final_outliers, "merged_data_rm_HK_v2.csv")
 ```
 
+```{r}
+#remove data from both outlier methods before final data removal after looking at flowJo of other weird points on plots
+
+merged_data_final_rm_HK_v3 <- merged_killeryeast_dataset_norm[-c(166, 413, 181, 225, 267, 352, 367, 388, 414, 29, 37, 39, 23, 33, 48, 76, 285, 282, 290, 261, 241, 286), ]
+which(merged_data_final_rm_HK_v3$Well_Num == "C3" & merged_data_final_rm_HK_v3$Day == 7 & merged_data_final_rm_HK_v3$Replicate == 2)
+
+write_csv(merged_data_final_rm_HK_v3, "merged_data_rm_HK_v3.csv")
+```
+
 Time to get into the analysis!!
 
 ```{r}
@@ -131,4 +140,88 @@ jitter_plots_rec_HK_Oct5 <- (jitter_plot_rec_outlier + jitter_plot_rec_hand + gu
 ggsave("jitter_plots_rec_HK_Oct5.png")
 
 #3850 & 3324a only
+```
+
+```{r}
+#flipped
+merged_data_final <- read_csv("merged_data_rm_HK_v2.csv")
+merged_data_final_outliers <- read_csv("merged_data_rm_HK.csv")
+
+ggplot(df_scar_hand, aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+
+ggplot(df_single_del_hand, aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+
+
+ggplot(df_scar_outlier, aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+
+ggplot(df_single_del_outlier, aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "By Hand Removal")
+```
+
+```{r}
+#remove data from both outlier methods before final data removal after looking at flowJo of other weird points on plots
+
+merged_data_final_rm_HK_v3 <- merged_killeryeast_dataset_norm[-c(166, 413, 181, 225, 267, 352, 367, 388, 414, 29, 37, 39, 23, 33, 48, 76, 285, 282, 290, 261, 241, 286), ]
+which(merged_data_final_rm_HK_v3$Well_Num == "C3" & merged_data_final_rm_HK_v3$Day == 7 & merged_data_final_rm_HK_v3$Replicate == 2)
+
+write_csv(merged_data_final_rm_HK_v3, "merged_data_rm_HK_v3.csv")
+```
+
+```{r}
+#new analysis plots with all points removed from by hand and outlier plots --> need to check with flowJO and find points that look weird
+df_rec_v3 <- subset(merged_data_final_rm_HK_v3, Culture %in% c(rec_gen, "3324m"))
+df_scar_v3 <- subset(merged_data_final_rm_HK_v3, Culture %in% c(scar_lines, "3324m"))
+df_single_del_v3 <- subset(merged_data_final_rm_HK_v3, Culture %in% c(single_del, "3324m"))
+
+
+ggplot(df_single_del_v3, aes(x = Day, y = norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(alpha = 0.2, width =0.1) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Combined Removals Single Deletion")
+
+
+ggplot(df_scar_v3, aes(x = Day, y = norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(alpha = 0.2, width =0.1) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Combined Removals Scarlet")
+
+ggplot(df_rec_v3, aes(x = Day, y = norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(alpha = 0.2, width =0.1) + geom_text(hjust = 0.2, nudge_x = 0.15, check_overlap = TRUE) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Combined Removals Rec Genos")
+
+```
+
+```{r}
+{r}
+#remove data from both outlier methods and weird points on plots prior to looking at flowJo (will look at flowJo next to confirm which to remove)
+
+merged_data_final_rm_HK_v4 <- merged_killeryeast_dataset_norm[-c(166, 413, 181, 225, 267, 352, 367, 388, 414, 29, 37, 39, 23, 33, 48, 76, 285, 282, 290, 261, 241, 286, 190, 226, 305, 350, 338, 24, 20, 58, 184, 222, 207, 269), ]
+
+which(merged_killeryeast_dataset_norm$Well_Num == "D6" & merged_killeryeast_dataset_norm$Day == 7 & merged_killeryeast_dataset_norm$Culture == "3911")
+
+write_csv(merged_data_final_rm_HK_v4, "merged_data_rm_HK_v4.csv")
+```
+
+```{r}
+#new analysis plots with all points removed PRIOR TO CHECKING FLOWJO
+df_rec_v4 <- subset(merged_data_final_rm_HK_v4, Culture %in% c(rec_gen, "3324m"))
+df_scar_v4 <- subset(merged_data_final_rm_HK_v4, Culture %in% c(scar_lines, "3324m"))
+df_single_del_v4 <- subset(merged_data_final_rm_HK_v4, Culture %in% c(single_del, "3324m"))
+
+ggplot(df_single_del_v4, aes(x = Day, y = norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(alpha = 0.2, width =0.1)  +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Combined Removals Single Deletion")
+
+ggplot(df_scar_v4, aes(x = Day, y = norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Combined Removals Scarlet")
+
+ggplot(df_rec_v4, aes(x = Day, y = norm_Hgui_totalprop, col = Culture, label = Well_Num)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Combined Removals Rec Genos")
 ```
