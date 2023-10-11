@@ -1,0 +1,58 @@
+---
+title: "FlowJo_Checks_analysis"
+format: html
+editor: visual
+---
+
+Import new dataset with FlowJo updated values to see if the points are still considered outliers when new gates are drawn. For most of these, the gates needed to be lowered. Nothing crazy, the regular gates just did not fit these data points as well as other data points.
+
+```{r}
+edits_removals <- read.csv("Edits_removals.csv")
+
+#perform normalizations on these data to match other dataframes for merging
+#first, remake normalization of killer yeast full dataset
+
+killeryeast_data <- read_csv('./WGJ_DFx_MS.csv') 
+killeryeast_norm <- killeryeast_data[, 1:9] %>%
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num)/Total_Cells)%>%  
+  group_by(Day, Replicate) %>%
+  filter(Culture != "b") %>%
+  mutate(norm_Hgui_totalprop = (Hgui_totalprop - min(Hgui_totalprop[Culture == "3324a"]))/(max(Hgui_totalprop[Culture == "3850"])- min(Hgui_totalprop[Culture == "3324a"])))
+
+#then,Hannah normalizes edited dataset using this framework
+#need to add wildtype scer alone and hgui alone values to edited flowjo dataset (1) pull out wt wells from main dataset (2) remove row in scarlet dataset that the other does not have (3) add
+#(1)
+wildtype_wells <- killeryeast_data[, 1:9] |> 
+  filter(Culture %in% c("3324a", "3850"))
+
+#(2)
+
+edits_removals <- rename(edits_removals, Hgui_Dead_Num = Hgui_dead_Num)
+edits_removals <- rename(edits_removals, Scer_Dead_Num = Scer_Dead_num)
+
+edits_removals |> 
+  group_by(Day) |> 
+  summarize(nobs = n())
+#(3)
+merged_edited_dataset <- 
+  rbind(edits_removals, wildtype_wells)
+
+##make normalizaion variables
+
+merged_edited_dataset <- merged_edited_dataset  |>
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num) / Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num) / Total_Cells) |>
+  group_by(Day, Replicate)
+
+##make normalized dataframe for subsequent analysis
+
+edited_norm <- 
+  merged_edited_dataset |>
+  mutate(Hgui_totalprop = (Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells,
+         Scer_totalprop = (Scer_Alive_Num + Scer_Dead_Num)/Total_Cells) |> 
+  group_by(Day, Replicate) |> 
+  mutate(norm_Hgui_totalprop = (Hgui_totalprop - min(Hgui_totalprop[Culture == "3324a"]))/(max(Hgui_totalprop[Culture == "3850"]) - min(Hgui_totalprop[Culture == "3324a"])))
+
+write_csv(edited_norm, "Edited_norm.csv")
+```
