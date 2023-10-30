@@ -1,0 +1,166 @@
+---
+title: "edits_20231030"
+format: html
+editor: visual
+---
+
+```{r}
+#need to make dataframe that has these values put in and the rest of the kept values to see if the adjusted flowjo data makes them no longer outliers
+# (1) import dataset with all outliers removed
+library(tidyverse)
+library(patchwork)
+
+merged_data_rm_HK_v4 <- read.csv("merged_data_rm_HK_v4.csv")
+
+#(2) append new data to this with the wildtypes removed
+edited_norm <- read_csv("Edited_norm.csv")
+
+edited_norm <- edited_norm |> 
+  filter(Culture != "3324a") |> 
+  filter(Culture != "3850")
+
+#(3) add data together
+merged_edited_dataset_for_plots <- 
+  rbind(edited_norm, merged_data_rm_HK_v4)
+```
+
+```{r}
+single_del <- c("3821", "3822", "3824")
+rec_gen <- c('3911', '3905', '3842', '3973')
+scar_lines <- c('3852', '3920' ,'3984')
+wildtype <- "3324m"
+
+merged_edited_dataset_for_plots$Culture <- factor(merged_edited_dataset_for_plots$Culture, 
+                          levels =
+                            c("3920", "3852", "3984", "3324a",
+                              "3850", "3821", "3822", "3824",
+                              '3911', '3905', '3842', '3973',
+                              "b", "3324m"))
+merged_edited_dataset_for_plots$Replicate <- factor(merged_edited_dataset_for_plots$Replicate, 
+                          levels =
+                            c("1", "2", "3"),
+                          ordered = TRUE)
+Outlier_BoxPlot_Wildtype <- ggplot(subset(merged_edited_dataset_for_plots, Culture %in% wildtype), 
+       aes(x = Culture, y = norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Wildtype")
+
+Outlier_BoxPlot_Wildtype
+
+#remove B4 from day 6 & E5 from day 9 (amongst others that were deleted)
+which(merged_edited_dataset_for_plots$Well_Num == "E5" & merged_edited_dataset_for_plots$Day == 9 & merged_edited_dataset_for_plots$Culture == "3324m")
+
+merged_edited_dataset_hk_v1 <- merged_edited_dataset_for_plots[-c(278, 277, 296, 5, 9, 11, 86, 2, 10, 202, 390), ]
+
+#check again for outliers in this dataset to see if new ones emerged
+Outlier_BoxPlot_Single_Del <- ggplot(subset(merged_edited_dataset_hk_v1, Culture %in% single_del), 
+       aes(x = Culture, y = norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Single Deletions")
+
+Outlier_BoxPlot_Single_Del
+
+Outlier_BoxPlot_Rec_Gen <- ggplot(subset(merged_edited_dataset_hk_v1, Culture %in% rec_gen), 
+       aes(x = Culture, y = norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Rec Gen")
+
+Outlier_BoxPlot_Rec_Gen
+
+Outlier_BoxPlot_Scar <- ggplot(subset(merged_edited_dataset_hk_v1, Culture %in% scar_lines), 
+       aes(x = Culture, y = norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Scarlet")
+
+Outlier_BoxPlot_Scar
+
+Outlier_BoxPlot_Wildtype <- ggplot(subset(merged_edited_dataset_hk_v1, Culture %in% wildtype), 
+       aes(x = Culture, y = norm_Hgui_totalprop, label = Well_Num)) +
+  geom_boxplot(width = 0.2) + geom_text(check_overlap = TRUE) + 
+  facet_grid(cols = vars(Day)) + theme_bw() + 
+  ylim(-0.25, 1.25) + labs(title = "Outlier Finder Wildtype")
+
+Outlier_BoxPlot_Wildtype
+
+#last set of removals
+which(merged_edited_dataset_hk_v1$Well_Num == "B4" & merged_edited_dataset_hk_v1$Day == 7 & merged_edited_dataset_hk_v1$Culture == "3324m")
+
+merged_edited_dataset_hk_vf <- merged_edited_dataset_hk_v1[-c(265, 251, 253, 261, 247, 2, 249), ]
+
+#remove duplicate rows of 3850 & 3324a
+merged_edited_dataset_hk_vf <- merged_edited_dataset_hk_v1 |> distinct()
+
+#stats on final datasets
+
+merged_edited_dataset_hk_vf |> 
+  distinct() |> 
+  group_by(Culture, Day) |> 
+  summarise(n = n())
+
+merged_edited_dataset_hk_vf |> 
+  group_by(Culture, Day) |> 
+  summarise(n = n())
+```
+
+```{r}
+#new plots
+#single deletion
+df_single_del_vf <- subset(merged_edited_dataset_hk_vf, Culture %in% c(single_del, "3324m"))
+
+#non-normalized values
+jitter_plot_single_del_vf_nonnorm <- ggplot(df_single_del_vf, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Single_Del_vf_nonnorm")
+
+#normalized values
+jitter_plot_single_del_vf_norm <- ggplot(df_single_del_vf, aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Single_Del_vf")
+
+jitter_plots_singledel_HK_Oct30 <- (jitter_plot_single_del_vf_nonnorm + jitter_plot_single_del_vf_norm + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Jitter Plots for Cleaned Data Singles'))
+
+jitter_plots_singledel_HK_Oct30
+
+ggsave("jitter_plots_singledel_HK_Oct30.png")
+
+#scarlet lines only
+df_scar_vf <- subset(merged_edited_dataset_hk_vf, Culture %in% c(scar_lines, "3324m"))
+
+#non-normalized values
+jitter_plot_scar_vf_nonnorm <- ggplot(df_scar_vf, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Scar_vf_nonnorm")
+
+#normalized values
+jitter_plot_scar_vf_norm <- ggplot(df_scar_vf, aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Scar_Del_vf")
+
+jitter_plots_scar_HK_Oct30 <- (jitter_plot_scar_vf_nonnorm  + jitter_plot_scar_vf_norm + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Jitter Plots for Cleaned Data Scarlet'))
+
+jitter_plots_scar_HK_Oct30
+
+ggsave("jitter_plots_scar_HK_Oct30.png")
+#rec genos only
+df_rec_vf <- subset(merged_edited_dataset_hk_vf, Culture %in% c(rec_gen, "3324m"))
+
+#non-normalized values
+jitter_plot_rec_vf_nonnorm <- ggplot(df_rec_vf, aes(x = Day, y = as.numeric((Hgui_Alive_Num + Hgui_Dead_Num)/Total_Cells), col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Rec_vf_nonnorm")
+
+#normalized values
+jitter_plot_rec_vf_norm <- ggplot(df_rec_vf, aes(x = Day, y = norm_Hgui_totalprop, col = Culture)) +
+  geom_jitter(alpha = 0.2, width =0.1) +
+  stat_summary(fun.data = "mean_se", linewidth = 0.5, size = 0.5, position=position_dodge(width = 0.2)) + labs(title = "Rec_Del_vf")
+
+jitter_plots_rec_HK_Oct30 <- (jitter_plot_rec_vf_nonnorm  + jitter_plot_rec_vf_norm + guide_area() + plot_layout(guides = 'collect') + plot_annotation(title = 'Jitter Plots for Cleaned Data Rec'))
+
+jitter_plots_rec_HK_Oct30
+
+ggsave("jitter_plots_rec_HK_Oct30.png")
+```
